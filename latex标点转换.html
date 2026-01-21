@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaTeX 中文标点转英文标点</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        pre {
+            white-space: pre-wrap;
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: flex-start;
+        }
+    </style>
+</head>
+<body>
+    <h1>LaTeX 中文标点转英文标点</h1>
+    <textarea id="inputText" placeholder="请输入 LaTeX 内容..."></textarea>
+    <div class="button-container">
+        <button onclick="convertPunctuation()">转换标点</button>
+        <button onclick="copyText()">复制结果</button>
+    </div>
+    <h2>转换结果：</h2>
+    <pre id="outputText"></pre>
+
+    <script>
+        function convertPunctuation() {
+            // 获取用户输入的 LaTeX 内容
+            const inputText = document.getElementById('inputText').value;
+
+            // 定义中文标点到英文标点的映射关系
+            const punctuationMap = {
+                '，': ', ',
+                '。': '. ',
+                '：': ': ',
+                '；': '; ',
+                '！': '! ',
+                '？': '? ',
+                '（': '(',
+                '）': ')',
+                '—': '-'
+            };
+
+            // 替换中文标点为英文标点
+            let outputText = inputText;
+            for (const [chinesePunc, englishPunc] of Object.entries(punctuationMap)) {
+                outputText = outputText.split(chinesePunc).join(englishPunc);
+            }
+
+            // 显示转换结果
+            document.getElementById('outputText').textContent = outputText;
+        }
+
+        function copyText() {
+            // 获取转换后的文本
+            const outputText = document.getElementById('outputText').textContent;
+
+            // 使用 navigator.clipboard API 复制文本
+            navigator.clipboard.writeText(outputText).then(() => {
+                alert("复制成功！");
+            }).catch(err => {
+                console.error('复制失败:', err);
+                alert("复制失败，请手动复制！");
+            });
+        }
+    </script>
+</body>
+</html>
