@@ -1,89 +1,195 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LaTeX 中文标点转英文标点</title>
+    <title>LaTeX Pro 极致增强版</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+        :root { --bg: #f0f2f5; --card: #ffffff; --text: #333; --primary: #007aff; }
+        body.dark-mode { --bg: #121212; --card: #1e1e1e; --text: #d1d1d1; --primary: #0a84ff; }
+        body { font-family: -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 80vh; }
+        .box { background: var(--card); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 8px 24px rgba(0,0,0,0.08); overflow: hidden; }
+        .box-header { padding: 12px 20px; background: rgba(0,0,0,0.03); border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        
+        textarea { flex: 1; padding: 20px; border: none; background: transparent; color: var(--text); font-family: "Fira Code", monospace; font-size: 15px; outline: none; resize: none; line-height: 1.5; }
+        
+        #previewArea { 
+            flex: 1; padding: 25px; overflow-y: auto; 
+            white-space: pre-wrap; word-break: break-word;
+            line-height: 1.8; font-size: 17px;
         }
-        textarea {
-            width: 100%;
-            height: 150px;
-            margin-bottom: 10px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-        pre {
-            white-space: pre-wrap;
-            background-color: #f4f4f4;
-            padding: 10px;
-            border: 1px solid #ddd;
-            margin-top: 10px;
-        }
-        .button-container {
-            display: flex;
-            justify-content: flex-start;
-        }
+
+        .btn-group { display: flex; gap: 10px; }
+        button { padding: 8px 16px; border-radius: 8px; border: 1px solid #ddd; background: var(--card); color: var(--text); cursor: pointer; font-size: 13px; transition: 0.2s; font-weight: 500; }
+        button:hover { background: #f0f0f0; border-color: var(--primary); }
+        .btn-main { background: var(--primary); color: white; border: none; }
+        .btn-main:hover { opacity: 0.9; transform: translateY(-1px); }
+        
+        .badge { font-size: 11px; background: #ff9500; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
     </style>
 </head>
 <body>
-    <h1>LaTeX 中文标点转英文标点</h1>
-    <textarea id="inputText" placeholder="请输入 LaTeX 内容..."></textarea>
-    <div class="button-container">
-        <button onclick="convertPunctuation()">转换标点</button>
-        <button onclick="copyText()">复制结果</button>
+
+<div class="container">
+    <div class="header">
+        <h2 style="margin:0">LaTeX 增强预览器 <span style="font-weight:normal; font-size:14px; opacity:0.6;">(智能纠错版)</span></h2>
+        <div class="btn-group">
+            <button onclick="clearAll()">🧹 清空</button>
+            <button onclick="toggleTheme()">🌓 主题转换</button>
+        </div>
     </div>
-    <h2>转换结果：</h2>
-    <pre id="outputText"></pre>
 
-    <script>
-        function convertPunctuation() {
-            // 获取用户输入的 LaTeX 内容
-            const inputText = document.getElementById('inputText').value;
+    <div class="main-grid">
+        <div class="box">
+            <div class="box-header">
+                <span>源码输入 <span class="badge">标点自动转换已开启</span></span>
+                <button onclick="copyProcessed()">📋 复制转换后的源码</button>
+            </div>
+            <textarea id="inputText" placeholder="请在此输入或粘贴 LaTeX 内容..."></textarea>
+        </div>
 
-            // 定义中文标点到英文标点的映射关系
-            const punctuationMap = {
-                '，': ', ',
-                '。': '. ',
-                '：': ': ',
-                '；': '; ',
-                '！': '! ',
-                '？': '? ',
-                '（': '(',
-                '）': ')',
-                '—': '-'
-            };
+        <div class="box">
+            <div class="box-header">
+                <span>实时预览</span>
+                <div class="btn-group">
+                    <button class="btn-main" onclick="fullProcess()">🚀 立即渲染 / 刷新</button>
+                    <button onclick="saveImg()">📸 导出图片</button>
+                </div>
+            </div>
+            <div id="previewArea"></div>
+        </div>
+    </div>
+</div>
 
-            // 替换中文标点为英文标点
-            let outputText = inputText;
-            for (const [chinesePunc, englishPunc] of Object.entries(punctuationMap)) {
-                outputText = outputText.split(chinesePunc).join(englishPunc);
+<script>
+    const input = document.getElementById('inputText');
+    const preview = document.getElementById('previewArea');
+
+    // 1. 初始化
+    window.onload = () => {
+        const draft = localStorage.getItem('latex_final_v1');
+        if(draft) { input.value = draft; fullProcess(); }
+        if(localStorage.getItem('dark_mode') === 'true') document.body.classList.add('dark-mode');
+    };
+
+    // 2. 自动转换逻辑（增强型：保护公式内部标点）
+    function smartFixPunctuation(str) {
+        const map = { '，': ', ', '。': '. ', '：': ': ', '；': '; ', '！': '! ', '？': '? ', '（': '(', '）': ')', '—': '-' };
+        
+        // 使用正则切分：将公式部分和文本部分分开
+        // 这个正则会识别 $...$, $...$, \begin{...}...\end{...}
+        const parts = str.split(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$|\\begin\{.*?\}(?:[\s\S]*?)\\end\{.*?\})/g);
+        
+        return parts.map(part => {
+            // 如果这一部分是以 $ 或 \ 开头的，说明是公式，不转换标点
+            if (part.startsWith('$') || part.startsWith('\\')) {
+                return part;
             }
+            // 否则是普通文本，执行转换
+            let newPart = part;
+            for (let key in map) newPart = newPart.split(key).join(map[key]);
+            return newPart;
+        }).join('');
+    }
 
-            // 显示转换结果
-            document.getElementById('outputText').textContent = outputText;
-        }
+    // 3. 自动修复 LaTeX 语法陷阱（针对用户上次遇到的报错）
+    function autoFixLatex(str) {
+        let fixed = str;
+        // 修复 1: 补全孤立的 \right
+        // 如果一行内有 \right) 但没有 \left(，在最前面补一个 \left.
+        const lines = fixed.split('\n');
+        const repairedLines = lines.map(line => {
+            if (line.includes('\\right') && !line.includes('\\left')) {
+                // 简单的自动补齐逻辑
+                return line.replace(/\\right([\(\)\[\]\|\}])/, '\\left. \\right$1');
+            }
+            return line;
+        });
+        return repairedLines.join('\n');
+    }
 
-        function copyText() {
-            // 获取转换后的文本
-            const outputText = document.getElementById('outputText').textContent;
+    // 4. 执行渲染
+    function fullProcess() {
+        let raw = input.value;
+        if(!raw.trim()) { preview.innerHTML = '<span style="color:gray">等待输入...</span>'; return; }
 
-            // 使用 navigator.clipboard API 复制文本
-            navigator.clipboard.writeText(outputText).then(() => {
-                alert("复制成功！");
-            }).catch(err => {
-                console.error('复制失败:', err);
-                alert("复制失败，请手动复制！");
+        // 保存草稿
+        localStorage.setItem('latex_final_v1', raw);
+
+        // 标点处理
+        let processed = smartFixPunctuation(raw);
+        // 语法纠偏
+        processed = autoFixLatex(processed);
+
+        // 注入预览区
+        preview.textContent = processed;
+
+        // 调用 KaTeX
+        if(window.renderMathInElement) {
+            renderMathInElement(preview, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true},
+                    {left: '\\begin{align*}', right: '\\end{align*}', display: true},
+                    {left: '\\begin{align}', right: '\\end{align}', display: true},
+                    {left: '\\begin{equation}', right: '\\end{equation}', display: true},
+                    {left: '\\begin{gather}', right: '\\end{gather}', display: true},
+                    {left: '\\begin{matrix}', right: '\\end{matrix}', display: true}
+                ],
+                throwOnError: false,
+                errorColor: '#ff4d4f',
+                strict: false
             });
         }
-    </script>
+    }
+
+    // 辅助功能
+    function toggleTheme() {
+        const isDark = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('dark_mode', isDark);
+    }
+
+    function clearAll() {
+        if(confirm("确定清空所有内容吗？")) {
+            input.value = "";
+            fullProcess();
+        }
+    }
+
+    function copyProcessed() {
+        const text = smartFixPunctuation(input.value);
+        navigator.clipboard.writeText(text).then(() => alert("转换后的源码已复制到剪贴板！"));
+    }
+
+    async function saveImg() {
+        const canvas = await html2canvas(preview, { 
+            scale: 2, 
+            backgroundColor: getComputedStyle(document.body).getPropertyValue('--card') 
+        });
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = `Formula-${Date.now()}.png`;
+        a.click();
+    }
+
+    // 监听输入，带防抖
+    let timer;
+    input.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(fullProcess, 800);
+    });
+</script>
 </body>
 </html>
-
