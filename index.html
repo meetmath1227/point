@@ -92,9 +92,9 @@
         
         return parts.map(part => {
             // 如果这一部分是以 $ 或 \ 开头的，说明是公式，不转换标点
-            if (part.startsWith('$') || part.startsWith('\\')) {
-                return part;
-            }
+            // if (part.startsWith('$') || part.startsWith('\\')) {
+                // return part;
+           //  }
             // 否则是普通文本，执行转换
             let newPart = part;
             for (let key in map) newPart = newPart.split(key).join(map[key]);
